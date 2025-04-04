@@ -1,0 +1,12 @@
+# Python cache and compiled files
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+venv/
+token.json
+credentials.json
+
+# VS Code project settings
+.vscode/
