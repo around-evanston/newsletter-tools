@@ -57,9 +57,15 @@ def fetch_events(service, calendar_id, time_min, time_max, event_colors=None):
     event_data = []
 
     for event in events:
-        # Normalize start date to YYYY-MM-DD format
-        start_str = event['start'].get('dateTime', event['start'].get('date'))
-        event['start'] = start_str[:10]
+        # Prefer 'date' for all-day events to avoid time zone offset issues
+        start_str = event['start'].get('date') or event['start'].get('dateTime')
+        event_date = start_str[:10]
+
+        # Filter out events before the start date
+        if event_date < time_min[:10]:
+            continue
+
+        event['start'] = event_date
 
         # Add color hex if available
         color_id = event.get('colorId')

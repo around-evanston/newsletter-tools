@@ -24,7 +24,7 @@ def to_iso_z(date_obj):
     return datetime.combine(date_obj, datetime.min.time()).isoformat() + "Z"
 
 if __name__ == "__main__":
-    newsletter_date = "2025-05-01"  # Change to desired Monday or Thursday
+    newsletter_date = "2025-05-08"  # Change to desired Monday or Thursday
 
     try:
         section_ranges = get_date_ranges(newsletter_date)
@@ -70,10 +70,16 @@ if __name__ == "__main__":
 
     print(f"\n✅ Total events pulled: {len(all_events)}")
 for event in all_events:
-    print(f"\n{event.start} — {event.section}")
+    print(f"\n{event.date} — {event.section}")
 
     print(f"  Title: {event.title}")
-    print(f"  Time: {event.time}")
+    print(f"  Start Date: {event.date}")
+    print(f"  End Date: {event.end_date}")
+    print(f"  All Weekend: {event.is_all_weekend}")
+    print(f"  Time: {event.time_raw}")
+    print(f"  Time Formatted: {event.formatted_time}")
+    print(f"  Cost: {event.cost_raw}")
+    print(f"  Cost Formatted: {event.formatted_cost}")
 
     if event.section == "Live Music":
         print(f"  Location: {event.location_name}")
@@ -82,3 +88,18 @@ for event in all_events:
         print(f"  Location: {event.location_name} → {event.location_url}")
         print(f"  Description: {event.description}")
         print(f"  Button: {event.button_text} → {event.button_url}")
+
+from app.formatter.html_formatter import format_and_save_sections
+
+# After all_events is populated
+format_and_save_sections(all_events, newsletter_date)
+
+from app.formatter import short_formatter
+
+# Filter events for the short-format section, e.g. "Live Music"
+short_section = "Live Music"
+short_events = [e for e in all_events if e.section == short_section]
+
+# Only generate the file if there are matching events
+if short_events:
+    short_formatter.save_short_html(short_events, newsletter_date, short_section)
