@@ -1,7 +1,5 @@
 # newsletter_tools
 
-# newsletter-tools
-
 A set of tools for generating HTML newsletters from Google Calendar event data. Designed for semi-automated production of the *Around Evanston* email newsletter.
 
 ## Features
@@ -37,11 +35,23 @@ MAIN_CALENDAR_ID=your_main_calendar_id
 CREDENTIALS_PATH=credentials.json
 TOKEN_PATH=token.json
 ```
+### 4. Add your Google credentials
+To authenticate with Google Calendar, place your credentials.json file (downloaded from the Google Cloud Console) in the root of the project directory:
 
-### 4. Authenticate Google Calendar
+```bash
+newsletter-tools/
+├── credentials.json   ← place it here
+├── .env
+├── main.py
+├── app/
+└── ...
+```
+This file is used to generate token.json on first run, which stores your Google Calendar access token.
+
+### 5. Authenticate Google Calendar
 When you run the script for the first time, it will open a browser window to authorize access to your Google Calendar and save a token locally.
 
-### 5. Run the tool
+### 6. Run the tool
 ```bash
 python main.py
 ```
@@ -64,8 +74,3 @@ main.py                 # Main execution script
 ```
 
 ## Future Plans
-- Add optional preview UI
-
-- Support for selecting sections and dates via CLI
-
-- Mailchimp API integration for pushing drafts directly
