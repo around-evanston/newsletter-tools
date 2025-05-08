@@ -1,63 +1,64 @@
 import re
 import html
+from bs4 import BeautifulSoup
 from app.data.event_model import Event
 from datetime import datetime, timedelta
+from app.utils import format_times_in_description
 
 def strip_html_tags(text):
-    """Remove simple HTML tags from a string."""
-    return re.sub(r'<[^>]+>', '', text)
+    return ''.join(BeautifulSoup(text, "html.parser").stripped_strings)
 
 def clean_google_redirect_url(url):
-    """If the URL is a Google redirect, extract the real URL."""
     match = re.match(r'https://www\.google\.com/url\?q=(https?[^&]+)', url)
     return match.group(1) if match else url
 
 def parse_event(raw_event, section):
-    """
-    Parses a raw Google Calendar event dict into an Event object.
-    """
-    raw_description = html.unescape(raw_event.get("description", "")).replace('\xa0', ' ')
-    raw_description = raw_description.replace('<br>', '\n')
+    raw_description = html.unescape(raw_event.get("description", "")).replace('\xa0', ' ').replace('<br>', '\n')
+    soup = BeautifulSoup(raw_description, "html.parser")
+    text = soup.get_text()
 
-    def extract(pattern, text, default=""):
+    def extract(pattern, default=""):
         match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
         return match.group(1).strip() if match else default
 
-    # Improved location handling
-    loc_match = re.search(
-        r'Loc:\s*Link\(\s*([^,]+?),\s*(?:<a href=")?(https?[^)">]+)', raw_description
-    )
+    # --- Location Handling ---
+    location_name = ''
+    location_url = ''
 
+    loc_match = re.search(r'Loc:\s*Link\(([^,]+?),\s*(https?[^)\n]+)', text)
     if loc_match:
         location_name = loc_match.group(1).strip()
         location_url = clean_google_redirect_url(loc_match.group(2).strip())
     else:
-        fallback_match = re.search(r'Loc:\s*Link\(\s*([^,]+?),\s*<a>(https?[^<]+)</a>', raw_description)
-        location_name = fallback_match.group(1).strip() if fallback_match else extract(r'Loc:\s*(.*?)\n', raw_description)
-        location_url = clean_google_redirect_url(fallback_match.group(2).strip()) if fallback_match else ''
+        location_name = extract(r'Loc:\s*(.*?)\n')
+        location_url = ''
 
-    # Extract other fields
-    title = strip_html_tags(extract(r'Title:\s*(.*?)\n', raw_description))
-    time = extract(r'Time:\s*(.*?)\n', raw_description)
-    cost = extract(r'Cost:\s*(.*?)\n', raw_description)
-    description = extract(r'Desc:\s*(.*?)(?:\n|$)', raw_description)  # Allow HTML in description
+    # --- Field Extraction ---
+    title = extract(r'Title:\s*(.*?)\n')
+    time = extract(r'Time:\s*(.*?)\n')
+    cost = extract(r'Cost:\s*(.*?)\n')
+    description = extract(r'Desc:\s*(.*?)(?:\n|$)')
 
-    button_match = re.search(r'Button\(([^,]+),\s*(?:<a href=")?(https?[^">]+)?', raw_description)
-    button_text = button_match.group(1).strip() if button_match else ''
+    # Extract description and format time strings within it
+    description = format_times_in_description(description)
 
-    raw_button_url = button_match.group(2).strip() if button_match and button_match.group(2) else ''
-    button_url = clean_google_redirect_url(raw_button_url)
+    # --- Button ---
+    button_text = ''
+    button_url = ''
 
-    # Extract and normalize end date
+    button_match = re.search(r'Button\(([^,]+),\s*(https?[^)\n]+)', text)
+    if button_match:
+        button_text = button_match.group(1).strip()
+        button_url = clean_google_redirect_url(button_match.group(2).strip())
+
+    # --- End Date ---
     raw_end = raw_event.get("end", "")
     end_str = raw_end.get("dateTime") or raw_end.get("date") or ""
     end_date = None
 
     if end_str:
         try:
-            # Convert string to datetime.date
             end_dt = datetime.fromisoformat(end_str.replace('Z', '+00:00')).date()
-            # All-day events end on the *next* day in Google Calendar, so subtract one day
             if 'date' in raw_end:
                 end_dt = end_dt - timedelta(days=1)
             end_date = end_dt
