@@ -1,6 +1,7 @@
 from app.utils import format_time, format_cost
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from app.utils import get_button_image
+import re
 
 class Event:
     def __init__(self, date, end_date, section, title="", time="", cost="",
@@ -64,18 +65,25 @@ class Event:
 
     @property
     def parsed_start_time(self):
-        """
-        Parse the start time string into a datetime.time object for proper sorting.
-        If parsing fails, return a default value (e.g. 00:00).
-        """
         if not self.time_raw:
-            return datetime.min.time()
+            return time.min
+
         try:
-            # Grab the first time if it's a range or multiple times
-            time_str = self.time_raw.split("–")[0].split("-")[0].strip()
-            return datetime.strptime(time_str, "%I:%M %p").time()
+            # Normalize all dash types
+            cleaned = re.sub(r"[\u2012\u2013\u2014\u2015\u2212−–—]", "-", self.time_raw)
+
+            # Grab first time-like string
+            matches = re.findall(r"\d{1,2}(?::\d{2})?\s*[APap][Mm]", cleaned)
+
+            if matches:
+                raw_time = matches[0].strip().upper()
+                if ":" not in raw_time:
+                    raw_time = raw_time.replace("AM", ":00 AM").replace("PM", ":00 PM")
+                return datetime.strptime(raw_time.strip(), "%I:%M %p").time()
+
+            return time.min
         except Exception:
-            return datetime.min.time()
+            return time.min
 
     @property
     def short_time(self):

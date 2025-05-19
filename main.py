@@ -16,6 +16,7 @@ load_dotenv()
 CALENDAR_IDS = {
     "Featured Events": os.getenv("FEATURED_CAL_ID"),
     "Kids and Family": os.getenv("KIDS_CAL_ID"),
+    "Recurring Events": os.getenv("RECURRING_CAL_ID"),
 }
 MAIN_CALENDAR_ID = os.getenv("MAIN_CALENDAR_ID")
 MUSIC_COLOR_HEX = '#5484ed'  # The color used to identify music events
@@ -24,7 +25,7 @@ def to_iso_z(date_obj):
     return datetime.combine(date_obj, datetime.min.time()).isoformat() + "Z"
 
 if __name__ == "__main__":
-    newsletter_date = "2025-05-08"  # Change to desired Monday or Thursday
+    newsletter_date = "2025-05-19"  # Change to desired Monday or Thursday
 
     try:
         section_ranges = get_date_ranges(newsletter_date)
@@ -57,6 +58,19 @@ if __name__ == "__main__":
 
             parsed = parse_all_events(filtered_music, section)
 
+        elif section == "Recurring Events":
+            recurring_cal_id = os.getenv("RECURRING_CAL_ID")
+            raw_recurring_events = fetch_events(service, recurring_cal_id, time_min, time_max, event_colors)
+
+            filtered_recurring = []
+            for event in raw_recurring_events:
+                color_id = event.get('colorId')
+                if color_id:
+                    hex_code = event_colors.get(color_id, {}).get('background')
+                    if hex_code == MUSIC_COLOR_HEX:
+                        filtered_recurring.append(event)
+
+            parsed = parse_all_events(filtered_recurring, section)
         else:
             calendar_id = CALENDAR_IDS.get(section)
             if not calendar_id:
@@ -96,9 +110,12 @@ format_and_save_sections(all_events, newsletter_date)
 
 from app.formatter import short_formatter
 
-# Filter events for the short-format section, e.g. "Live Music"
-short_section = "Live Music"
-short_events = [e for e in all_events if e.section == short_section]
+
+# Filter events for the short-format sections
+for short_section in ["Live Music", "Recurring Events"]:
+    short_events = [e for e in all_events if e.section == short_section]
+    if short_events:
+        short_formatter.save_short_html(short_events, newsletter_date, short_section)
 
 # Only generate the file if there are matching events
 if short_events:

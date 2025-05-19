@@ -26,7 +26,8 @@ def get_date_ranges(newsletter_date):
     return {
         "Featured Events": featured_range,
         "Kids and Family": featured_range,
-        "Live Music": music_range
+        "Live Music": music_range,
+        "Recurring Events":featured_range
     }
 
 import logging

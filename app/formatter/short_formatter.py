@@ -19,16 +19,21 @@ def generate_short_event_html(event):
         if parenthetical not in title_html:
             title_html += f" {parenthetical}"
 
-    # Build full sentence
-    pieces = [title_html]
+    # Build rest of the sentence
+    details = []
     if event.location_name:
-        pieces.append(f'at {event.location_name}')
+        details.append(f'at {event.location_name}')
     if event.short_time:
-        pieces.append(f'{event.short_time}')
+        details.append(event.short_time)
     if event.formatted_cost:
-        pieces.append(f'{event.formatted_cost}')
+        details.append(event.formatted_cost)
 
-    return f'<li><p>{", ".join(pieces)}</p></li>'
+    # Append details only (comma-separated), with a space but **no comma** after the title
+    if details:
+        return f'<li><p>{title_html} {" ".join([", ".join(details)])}</p></li>'
+    else:
+        return f'<li><p>{title_html}</p></li>'
+
 
 def generate_short_html(events, newsletter_date):
     """Group events by date and generate HTML output."""
