@@ -70,7 +70,10 @@ class Event:
 
         try:
             # Normalize all dash types
+            # Before matching
             cleaned = re.sub(r"[\u2012\u2013\u2014\u2015\u2212−–—]", "-", self.time_raw)
+            cleaned = re.sub(r"(?<=\d)([APap][Mm])", r" \1", cleaned)  # Add space before AM/PM if missing
+
 
             # Grab first time-like string
             matches = re.findall(r"\d{1,2}(?::\d{2})?\s*[APap][Mm]", cleaned)

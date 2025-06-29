@@ -17,9 +17,11 @@ def get_date_ranges(newsletter_date):
     if weekday == 0:  # Monday
         featured_range = (newsletter_date, newsletter_date + timedelta(days=3))  # Mon–Thu
         music_range = (newsletter_date, newsletter_date + timedelta(days=6))     # Mon–Sun
+        save_the_date_range = (newsletter_date, newsletter_date + timedelta(days=35))
     elif weekday == 3:  # Thursday
         featured_range = (newsletter_date, newsletter_date + timedelta(days=3))  # Thu–Sun
         music_range = (newsletter_date, newsletter_date + timedelta(days=6))     # Thu–Wed (next week)
+        save_the_date_range = (newsletter_date, newsletter_date + timedelta(days=35))
     else:
         raise ValueError("Newsletter date must be a Monday or Thursday.")
 
@@ -27,7 +29,8 @@ def get_date_ranges(newsletter_date):
         "Featured Events": featured_range,
         "Kids and Family": featured_range,
         "Live Music": music_range,
-        "Recurring Events":featured_range
+        "Recurring Events":featured_range,
+        "Save the Date": save_the_date_range
     }
 
 import logging
