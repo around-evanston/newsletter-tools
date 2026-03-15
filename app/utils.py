@@ -29,7 +29,7 @@ def get_date_ranges(newsletter_date):
         "Featured Events": featured_range,
         "Kids and Family": featured_range,
         "Live Music": music_range,
-        "Recurring Events":featured_range,
+        "Trivia": featured_range,
         "Save the Date": save_the_date_range
     }
 

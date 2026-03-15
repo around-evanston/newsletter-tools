@@ -38,18 +38,26 @@ def generate_short_event_html(event):
 def generate_short_html(events, newsletter_date):
     """Group events by date and generate HTML output."""
     grouped = defaultdict(list)
+
     for event in events:
-        grouped[event.date.strftime("%A, %B %-d")].append(event)
+        # Use the actual date (keeps year) as the grouping key
+        # If event.date is a datetime, normalize to a date:
+        event_day = event.date.date() if hasattr(event.date, "date") else event.date
+        grouped[event_day].append(event)
 
     html_output = '<p style="padding: 10px 0;"><em>Click the included links for info and tickets!</em></p><p></p>'
 
-    for display_date in sorted(grouped.keys(), key=lambda d: datetime.strptime(d, "%A, %B %d")):
+    for event_day in sorted(grouped.keys()):
+        display_date = event_day.strftime("%A, %B %-d")  # mac/linux
+        # If you ever run this on Windows, use: "%A, %B %d".lstrip("0") logic instead
+
         html_output += f'<p><strong>{display_date}</strong></p><ul>'
-        for event in sorted(grouped[display_date], key=lambda e: e.parsed_start_time):
+        for event in sorted(grouped[event_day], key=lambda e: e.parsed_start_time):
             html_output += generate_short_event_html(event)
         html_output += '</ul><p></p>'
 
     return html_output
+
 
 def save_short_html(events, newsletter_date, section_name):
     """Save the short HTML output to a file."""
